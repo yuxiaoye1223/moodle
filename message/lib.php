@@ -68,6 +68,7 @@ define('SHOW_ACTION_LINKS_IN_CONTACT_LIST', true);
 define('MESSAGE_SEARCH_MAX_RESULTS', 200);
 
 define('MESSAGE_CONTACTS_PER_PAGE',10);
+define('MESSAGE_MAX_COURSE_NAME_LENGTH', 30);
 
 if (!isset($CFG->message_contacts_refresh)) {  // Refresh the contacts list every 60 seconds
     $CFG->message_contacts_refresh = 60;
@@ -447,6 +448,7 @@ function message_print_contacts($onlinecontacts, $offlinecontacts, $strangers, $
 */
 function message_print_usergroup_selector($viewing, $courses, $coursecontexts, $countunreadtotal, $countblocked, $strunreadmessages) {
     $options = array();
+    $textlib = textlib_get_instance(); // going to use textlib services
 
     if ($countunreadtotal>0) { //if there are unread messages
         $options[VIEW_UNREAD_MESSAGES] = $strunreadmessages;
@@ -463,7 +465,12 @@ function message_print_usergroup_selector($viewing, $courses, $coursecontexts, $
 
         foreach($courses as $course) {
             if (has_capability('moodle/course:viewparticipants', $coursecontexts[$course->id])) {
-                $courses_options[VIEW_COURSE.$course->id] = $course->shortname;
+                //Not using short_text() as we want the end of the course name. Not the beginning.
+                if ($textlib->strlen($course->shortname) > MESSAGE_MAX_COURSE_NAME_LENGTH) {
+                    $courses_options[VIEW_COURSE.$course->id] = '...'.$textlib->substr($course->shortname, -MESSAGE_MAX_COURSE_NAME_LENGTH);
+                } else {
+                    $courses_options[VIEW_COURSE.$course->id] = $course->shortname;
+                }
             }
         }
 
